@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>간단 설문조사</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .container {
+      width: min(920px, calc(100% - 32px));
+      margin: 48px auto;
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    }
+
+    .question-title {
+      margin: 0 0 18px;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border: 1px solid #dbe1ea;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .option:hover {
+      border-color: #4f46e5;
+      background: #f8f7ff;
+    }
+
+    .option input {
+      width: 18px;
+      height: 18px;
+      accent-color: #4f46e5;
+    }
+
+    .submit-btn,
+    .reset-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: #4f46e5;
+      color: white;
+    }
+
+    .submit-btn:hover {
+      background: #4338ca;
+    }
+
+    .reset-btn {
+      background: #eef2ff;
+      color: #4338ca;
+      margin-top: 12px;
+    }
+
+    .message {
+      min-height: 24px;
+      margin: 14px 0 0;
+      font-size: 14px;
+      color: #dc2626;
+    }
+
+    .results-title {
+      margin-top: 38px;
+      margin-bottom: 16px;
+      font-size: 25px;
+    }
+
+    .chart {
+      display: grid;
+      gap: 14px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(80px, 150px) 1fr 70px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .bar-label {
+      font-size: 14px;
+      font-weight: 600;
+      word-break: keep-all;
+    }
+
+    .bar-track {
+      height: 24px;
+      background: #edf0f5;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      border-radius: 999px;
+      transition: width 0.45s ease;
+    }
+
+    .bar-value {
+      text-align: right;
+      font-size: 13px;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+
+    .total {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .notice {
+      margin-top: 28px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 28px auto;
+      }
+
+      .header h1 {
+        font-size: 27px;
+      }
+
+      .card {
+        padding: 19px;
+      }
+
+      .bar-row {
+        grid-template-columns: 90px 1fr;
+      }
+
+      .bar-value {
+        grid-column: 2;
+        text-align: left;
+        margin-top: -8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>설문조사</h1>
+      <p>아래 두 질문에 답변하면 현재 결과를 바로 확인할 수 있습니다.</p>
+    </header>
+
+    <form id="surveyForm">
+      <section class="card">
+        <h2 class="question-title" id="q1Title"></h2>
+        <div class="options" id="q1Options"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="question-title" id="q2Title"></h2>
+        <div class="options" id="q2Options"></div>
+      </section>
+
+      <button class="submit-btn" type="submit">답변 제출하기</button>
+      <p class="message" id="message" aria-live="polite"></p>
+    </form>
+
+    <h2 class="results-title">실시간 결과</h2>
+
+    <section class="card">
+      <h3 class="question-title" id="resultQ1Title"></h3>
+      <div class="chart" id="q1Chart"></div>
+      <div class="total" id="q1Total"></div>
+    </section>
+
+    <section class="card">
+      <h3 class="question-title" id="resultQ2Title"></h3>
+      <div class="chart" id="q2Chart"></div>
+      <div class="total" id="q2Total"></div>
+    </section>
+
+    <button class="reset-btn" type="button" id="resetBtn">이 브라우저의 결과 초기화</button>
+
+    <div class="notice">
+      이 버전은 서버 없이 작동하는 GitHub Pages용 예시입니다.
+      설문 결과는 각 사용자의 브라우저(localStorage)에 저장되므로,
+      여러 사람이 제출한 결과를 한데 모으려면 Firebase, Supabase 같은 데이터베이스 연결이 필요합니다.
+    </div>
+  </main>
+
+  <script>
+    /*
+      ==============================
+      여기만 바꾸면 질문/선택지 수정 가능
+      ==============================
+    */
+    const survey = [
+      {
+        id: "q1",
+        question: "질문 1. 어떤 선택지를 가장 선호하시나요?",
+        options: ["선택지 A", "선택지 B", "선택지 C", "선택지 D"]
+      },
+      {
+        id: "q2",
+        question: "질문 2. 전반적으로 얼마나 만족하시나요?",
+        options: ["매우 만족", "만족", "보통", "불만족"]
+      }
+    ];
+
+    const STORAGE_KEY = "github-survey-results-v1";
+
+    function createEmptyResults() {
+      const result = {};
+      survey.forEach(question => {
+        result[question.id] = {};
+        question.options.forEach(option => {
+          result[question.id][option] = 0;
+        });
+      });
+      return result;
+    }
+
+    function loadResults() {
+      const empty = createEmptyResults();
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) return empty;
+
+        survey.forEach(question => {
+          question.options.forEach(option => {
+            const value = saved?.[question.id]?.[option];
+            empty[question.id][option] =
+              Number.isFinite(value) && value >= 0 ? value : 0;
+          });
+        });
+
+        return empty;
+      } catch {
+        return empty;
+      }
+    }
+
+    let results = loadResults();
+
+    function renderSurvey() {
+      survey.forEach((question, index) => {
+        const number = index + 1;
+        document.getElementById(`${question.id}Title`).textContent = question.question;
+        document.getElementById(`resultQ${number}Title`).textContent = question.question;
+
+        const optionsContainer = document.getElementById(`${question.id}Options`);
+        optionsContainer.innerHTML = "";
+
+        question.options.forEach(option => {
+          const label = document.createElement("label");
+          label.className = "option";
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = question.id;
+          input.value = option;
+          input.required = true;
+
+          const span = document.createElement("span");
+          span.textContent = option;
+
+          label.append(input, span);
+          optionsContainer.appendChild(label);
+        });
+      });
+    }
+
+    function renderChart(question, chartElement, totalElement) {
+      const counts = results[question.id];
+      const total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
+      chartElement.innerHTML = "";
+
+      question.options.forEach(option => {
+        const count = counts[option] || 0;
+        const percentage = total === 0 ? 0 : (count / total) * 100;
+
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        label.textContent = option;
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${percentage}%`;
+
+        track.appendChild(fill);
+
+        const value = document.createElement("div");
+        value.className = "bar-value";
+        value.textContent = `${count}명 · ${percentage.toFixed(1)}%`;
+
+        row.append(label, track, value);
+        chartElement.appendChild(row);
+      });
+
+      totalElement.textContent = `총 응답 수: ${total}명`;
+    }
+
+    function renderResults() {
+      renderChart(
+        survey[0],
+        document.getElementById("q1Chart"),
+        document.getElementById("q1Total")
+      );
+
+      renderChart(
+        survey[1],
+        document.getElementById("q2Chart"),
+        document.getElementById("q2Total")
+      );
+    }
+
+    document.getElementById("surveyForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const message = document.getElementById("message");
+      const formData = new FormData(event.currentTarget);
+
+      const answers = {};
+
+      for (const question of survey) {
+        const answer = formData.get(question.id);
+
+        if (!answer) {
+          message.textContent = "두 질문에 모두 답변해 주세요.";
+          return;
+        }
+
+        answers[question.id] = answer;
+      }
+
+      for (const question of survey) {
+        const answer = answers[question.id];
+        results[question.id][answer] += 1;
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+
+      message.style.color = "#15803d";
+      message.textContent = "답변이 제출되었습니다. 아래 결과가 업데이트되었습니다.";
+
+      renderResults();
+      event.currentTarget.reset();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const confirmed = window.confirm("이 브라우저에 저장된 설문 결과를 모두 초기화할까요?");
+      if (!confirmed) return;
+
+      results = createEmptyResults();
+      localStorage.removeItem(STORAGE_KEY);
+      renderResults();
+
+      const message = document.getElementById("message");
+      message.style.color = "#15803d";
+      message.textContent = "결과가 초기화되었습니다.";
+    });
+
+    renderSurvey();
+    renderResults();
+  </script>
+</body>
+</html>
